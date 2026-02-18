@@ -34,7 +34,7 @@ const app = document.querySelector("#app");
 // - le footer
 app.innerHTML = `
   <header class="site-header">
-    <button id="home-top" class="home-top-button">Home</button>
+    <button id="home-top" class="home-top-button">Accueil</button>
     <h1>🚲 Vélib' – Disponibilité en temps réel</h1>
     <p>Recherche de stations Vélib' (données OpenData Paris).</p>
   </header>
@@ -79,7 +79,7 @@ app.innerHTML = `
         <input
           id="search-input"
           type="search"
-          placeholder="Rechercher par nom de station ou code INSEE…"
+          placeholder="Rechercher…"
           aria-label="Rechercher une station"
         />
         <button id="search-button">Rechercher</button>
@@ -155,8 +155,8 @@ homeTopBtn.addEventListener("click", () => {
   if (searchInput) searchInput.value = ""; // on vide la recherche
   fetchStations(); // on recharge toutes les stations (sans filtre)
   showHome(); // on revient sur la page d'accueil
-  window.scrollTo({ top: 0, behavior: "smooth" });
 });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 
 // ===============================
 //  Bouton "Voir les stations" (page d'accueil)
@@ -331,9 +331,21 @@ function renderPage() {
 
   // Si aucun résultat après filtrage
   if (pageItems.length === 0) {
-    resultsDiv.innerHTML = "<p>Aucun résultat trouvé.</p>";
+    // on masque la ligne verticale de la timeline en ajoutant une classe
+    resultsDiv.classList.add("results-empty");
+    resultsDiv.innerHTML = `
+      <div class="no-results">
+        <p class="no-results-title">Aucun résultat trouvé</p>
+        <p class="no-results-text">
+          Essaie un autre nom de station ou un autre code INSEE.
+        </p>
+      </div>
+    `;
     return;
   }
+
+  // s'il y a des résultats, on s'assure que la classe est retirée
+  resultsDiv.classList.remove("results-empty");
 
   // 3. Création et affichage des cartes pour chaque station
   for (let i = 0; i < pageItems.length; i++) {
@@ -356,16 +368,64 @@ function renderPage() {
     const card = document.createElement("article");
     card.className = "card";
 
-    // On injecte le contenu HTML de la carte
-    card.innerHTML = `
-      <h2 class="card-title">${nom}</h2>
-      <p class="card-meta"><strong>Code INSEE :</strong> ${arrondissement}</p>
-      <p class="card-meta"><strong>Code station :</strong> ${code}</p>
-      <p class="card-meta"><strong>Vélos disponibles :</strong> ${velos}</p>
-      <p class="card-meta"><strong>Places libres :</strong> ${places}</p>
-      <p class="card-meta"><strong>Capacité :</strong> ${capacite}</p>
-      <p class="card-meta"><strong>Dernière mise à jour :</strong> ${maj}</p>
-    `;
+    // Préparation des coordonnées pour la carte (si disponibles)
+    const coords = station.coordonnees_geo || station.geo_point_2d;
+    let mapContent = "<p class=\"card-meta\">Carte indisponible pour cette station.</p>";
+
+    if (coords && Array.isArray(coords) && coords.length >= 2) {
+      const lat = coords[0];
+      const lon = coords[1];
+      const delta = 0.01; // taille du zoom (petite zone autour de la station)
+      const bbox = `${lon - delta},${lat - delta},${lon + delta},${lat + delta}`;
+      const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+
+      mapContent = `
+        <iframe
+          src="${mapUrl}"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      `;
+    }
+
+// On injecte le contenu HTML de la carte
+// Visible en permanence : Arrondissement, Code INSEE, Vélos, détail électriques/mécaniques, Places libres, Capacité
+// Caché dans un bloc : Code station, Dernière mise à jour + carte
+card.innerHTML = `
+  <h2 class="card-title">${nom}</h2>
+  <p class="card-meta"><strong>Arrondissement :</strong> ${station.nom_arrondissement_communes || "Non renseigné"}</p>
+  <p class="card-meta"><strong>Code INSEE :</strong> ${arrondissement}</p>
+  <p class="card-meta"><strong>Vélos disponibles :</strong> ${velos}</p>
+  <p class="card-meta"><strong> Électriques :</strong> ${station.ebike ?? "—"}</p>
+  <p class="card-meta"><strong> Mécaniques :</strong> ${station.mechanical ?? "—"}</p>
+  <p class="card-meta"><strong>Places libres :</strong> ${places}</p>
+  <p class="card-meta"><strong>Capacité :</strong> ${capacite}</p>
+
+  <button class="toggle-details">Voir plus</button>
+
+  <div class="card-map" style="display: none;">
+    <p class="card-meta"><strong>Code station :</strong> ${code}</p>
+    <p class="card-meta"><strong>Dernière mise à jour :</strong> ${maj}</p>
+    ${mapContent}
+  </div>
+`;
+
+    // Gestion du bouton Voir plus / Voir moins pour afficher/masquer la carte
+    const toggleBtn = card.querySelector(".toggle-details");
+    const mapDiv = card.querySelector(".card-map");
+
+    toggleBtn.addEventListener("click", () => {
+      const isHidden =
+        mapDiv.style.display === "none" || mapDiv.style.display === "";
+
+      if (isHidden) {
+        mapDiv.style.display = "block";
+        toggleBtn.textContent = "Voir moins";
+      } else {
+        mapDiv.style.display = "none";
+        toggleBtn.textContent = "Voir plus";
+      }
+    });
 
     resultsDiv.appendChild(card);
   }

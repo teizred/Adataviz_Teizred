@@ -27,7 +27,7 @@ body {
 /* Header */
 
 .site-header {
-  position: relative;   /* allows the Home button to stick to the header */
+  position: relative;
   padding: 2.5rem 1rem 2rem;
   text-align: center;
   color: #e5e7eb;
@@ -36,10 +36,10 @@ body {
 /* Home button top-left */
 .home-top-button {
   position: absolute;
-  top: 1.2rem;
-  left: 1rem;
+  top: 3rem;
+  left: 2.5rem;
   padding: 0.45rem 1rem;
-  font-size: 0.85rem;
+  font-size: 1rem;
   background: linear-gradient(135deg, #f97316, #facc15);
   color: #111827;
   border: none;
@@ -83,7 +83,7 @@ main {
 
 .search-section {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
   background: rgba(15, 23, 42, 0.8);
@@ -168,6 +168,30 @@ main {
   opacity: 0.4;
 }
 
+/* État sans résultat : on masque la ligne verticale */
+.results.results-empty::before {
+  display: none;
+}
+
+/* Bloc d'affichage quand aucune station n'est trouvée */
+.no-results {
+  margin-top: 2.5rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.no-results-title {
+  margin: 0 0 0.35rem 0;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #e5e7eb;
+}
+
+.no-results-text {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
 /* Card */
 
 .card {
@@ -214,6 +238,40 @@ main {
 
 .card-meta strong {
   color: #e5e7eb;
+}
+
+/* Bouton Voir plus / Voir moins dans chaque carte */
+.toggle-details {
+  grid-column: 1 / -1;            /* bouton sur toute la largeur de la carte */
+  margin-top: 0.7rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggle-details:hover {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+/* Bloc carte (détails + iframe) */
+.card-map {
+  grid-column: 1 / -1;            /* occupe toute la largeur dans la grille */
+  margin-top: 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(31, 41, 55, 0.9);
+}
+
+.card-map iframe {
+  width: 100%;
+  height: 220px; /* carte plus petite pour garder une carte compacte */
+  border: none;
+  border-radius: 0.8rem;
+  margin-top: 0.4rem;
 }
 
 /* Right column: description + button */
@@ -277,6 +335,10 @@ main {
     padding: 0 0.75rem 2rem;
   }
 
+  .search-section {
+    flex-wrap: nowrap;
+    border-radius: 1.25rem;
+  }
 
   #search-button {
     width: 100%;
@@ -300,6 +362,9 @@ main {
     border-radius: 0.85rem;
     max-width: calc(100% - 1.5rem); 
   }
+  .card-map iframe {
+    height: 140px;  /* carte compacte sur mobile aussi */
+  }
 
   .card::before {
     display: none;
@@ -308,14 +373,14 @@ main {
   .pagination {
     margin-bottom: 0.5rem;
   }
-}
 
   .home-top-button {
-    top: 0.9rem;            /* remonte un peu le bouton */
+    top: 0.9rem;            /* position pour la version mobile */
     left: 0.75rem;          /* aligne avec le contenu mobile */
     padding: 0.35rem 0.8rem;
     font-size: 0.8rem;      /* bouton plus petit sur mobile */
   }
+}
 
 /* Home / dashboard layout */
 .home-view {
